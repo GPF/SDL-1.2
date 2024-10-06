@@ -21,10 +21,15 @@ KOS_CFLAGS += -Isrc/video -Isrc/video/dc -DNO_SIGNAL_H -DENABLE_DC
 
 CFLAGS = $(KOS_CFLAGS) -Wimplicit-function-declaration $(DEFS) -Iinclude
 
+# Dependency flags
+DEPFLAGS = -MMD -MP
+
 SRCS = \
-    src/audio/dc/SDL_dcaudio.c \
-    src/audio/dc/aica.c \
+    src/audio/dc/sndstream/SDL_dreamcastaudio.c \
+    src/audio/dc/aica/aica.c \
+    src/audio/dc/aica/SDL_dcaudio.c \
     src/audio/dummy/SDL_dummyaudio.c \
+    src/audio/disk/SDL_diskaudio.c \
     src/audio/SDL_audio.c \
     src/audio/SDL_audiocvt.c \
     src/audio/SDL_audiodev.c \
@@ -56,8 +61,12 @@ SRCS = \
     src/thread/dc/SDL_sysmutex.c \
     src/thread/dc/SDL_syssem.c \
     src/thread/dc/SDL_systhread.c \
+    src/thread/pthread/SDL_syscond.c \
+    src/thread/pthread/SDL_sysmutex.c \
+    src/thread/pthread/SDL_systhread.c \
     src/thread/SDL_thread.c \
     src/timer/dc/SDL_systimer.c \
+    src/timer/unix/SDL_systimer.c \
     src/timer/SDL_timer.c \
     src/video/dc/SDL_dcevents.c \
     src/video/dc/SDL_dcvideo.c \
@@ -114,27 +123,44 @@ TEST = \
     test/threadwin.c \
     test/torturethread.c
 
-# Compile source files into object files
-%.o: %.c copy_headers
-	$(CC) $(CFLAGS) -c $< -o $@
+# Compile source files into object files and generate dependencies
+%.o: %.c
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# Rebuild when SDL_dreamcast_config.h changes
+src/%.o: include/SDL_dreamcast_config.h
 
 # Main target
 $(TARGET): $(OBJS)
 	@rm -f $(KOS_BASE)/addons/lib/$(KOS_ARCH)/$(TARGET)
 	$(AR) rcs $(KOS_BASE)/addons/lib/$(KOS_ARCH)/$(TARGET) $(OBJS)
+	touch $@
 
-# Rule to copy headers
+$(TARGET): copy_headers $(OBJS)
+	@rm -f $(KOS_BASE)/addons/lib/$(KOS_ARCH)/$(TARGET)
+	$(AR) rcs $(KOS_BASE)/addons/lib/$(KOS_ARCH)/$(TARGET) $(OBJS)
+
 copy_headers: copy_config
-	@rm -rf $(KOS_BASE)/addons/include/SDL
-	@mkdir -p $(KOS_BASE)/addons/include/SDL
+	@if [ ! -d $(KOS_BASE)/addons/include/SDL ]; then \
+		mkdir -p $(KOS_BASE)/addons/include/SDL; \
+	fi
 	@cp -R include/*.h $(KOS_BASE)/addons/include/SDL
 
-# Copy config files
-copy_config: 
-	@cp include/SDL_config.h.default include/SDL_config.h
+# Only copy config file if it has changed
+copy_config:
+	@if [ ! -f include/SDL_config.h ] || ! cmp -s include/SDL_config.h.default include/SDL_config.h; then \
+		cp include/SDL_config.h.default include/SDL_config.h; \
+		echo "Updated SDL_config.h"; \
+	else \
+		echo "SDL_config.h is up to date"; \
+	fi
+
 
 # Clean target
 clean:
-	rm -f include/SDL_config.h $(OBJS)
+	rm -f include/SDL_config.h $(OBJS) $(OBJS:.o=.d)
+
+# Include dependency files
+-include $(OBJS:.o=.d)
 
 .PHONY: copy_config clean

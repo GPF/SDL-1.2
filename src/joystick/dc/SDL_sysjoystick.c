@@ -91,6 +91,15 @@ struct joystick_hwdata
 	int joy2y;
 };
 
+
+// Initial keyboard position
+int vk_row = 0;
+int vk_col = 0;
+int virtual_keyboard_visible = 0;
+bool shiftActive = false;
+int current_row = 0;
+int current_col = 0;
+
 /* Function to scan the system for joysticks.
  * This function should set SDL_numjoysticks to the number of available
  * joysticks.  Joystick 0 should be the system default joystick.
@@ -98,10 +107,11 @@ struct joystick_hwdata
  */
 
 int __sdl_dc_emulate_keyboard=1, __sdl_dc_emulate_mouse=1,__sdl_dc_emulate_vhkb_keyboard=0;
-
+void toggleVirtualKeyboard();
 void SDL_DC_EmulateVirtualKeyboard(SDL_bool value)
 {
 	__sdl_dc_emulate_vhkb_keyboard=(int)value;
+    toggleVirtualKeyboard();
 }
 
 void SDL_DC_EmulateKeyboard(SDL_bool value)
@@ -114,7 +124,7 @@ void SDL_DC_EmulateMouse(SDL_bool value)
 	__sdl_dc_emulate_mouse=(int)value;
 }
 
-void toggleVirtualKeyboard();
+
 
 int SDL_SYS_JoystickInit(void)
 {
@@ -172,9 +182,6 @@ int SDL_SYS_JoystickOpen(SDL_Joystick *joystick)
 	joystick->naxes = MAX_AXES;
 	joystick->nhats = MAX_HATS;
 
-	if (__sdl_dc_emulate_vhkb_keyboard)
-		toggleVirtualKeyboard();
-
 	return(0);
 }
 
@@ -208,37 +215,27 @@ const char* shiftKeyboardLayout[VK_ROWS][VK_COLS] = {
     {"Z", "X", "C", "V", "B", "N", "M", "<", ">", "?", "SPC", "", "","ENTER"}
 };
 
-
-
-// Initial keyboard position
-int vk_row = 0;
-int vk_col = 0;
-int virtual_keyboard_visible = 0;
-bool shiftActive = false;
-int current_row = 0;
-int current_col = 0;
-
-// Function to draw a box using the BIOS font
 void bfont_draw_box(void *buffer, uint32 bufwidth, int x, int y, int width, int height, uint8 opaque, uint32 color) {
     int i, j;
     uint32 old_fg = bfont_set_foreground_color(color);
+    uint32 *buf = (uint32*)buffer;
 
     // Draw top and bottom edges
     for (i = 0; i < width; ++i) {
-        bfont_draw(buffer, bufwidth, opaque, ' '); // Adjusted to include buffer and bufwidth
-        bfont_draw(buffer, bufwidth, opaque, ' ');
+        bfont_draw(buf + y * bufwidth + x + i, bufwidth, opaque, ' ');
+        bfont_draw(buf + (y + height - 1) * bufwidth + x + i, bufwidth, opaque, ' ');
     }
 
     // Draw left and right edges
-    for (j = 0; j < height; ++j) {
-        bfont_draw(buffer, bufwidth, opaque, ' ');
-        bfont_draw(buffer, bufwidth, opaque, ' ');
+    for (j = 1; j < height - 1; ++j) {
+        bfont_draw(buf + (y + j) * bufwidth + x, bufwidth, opaque, ' ');
+        bfont_draw(buf + (y + j) * bufwidth + x + width - 1, bufwidth, opaque, ' ');
     }
 
     // Fill the interior
     for (j = 1; j < height - 1; ++j) {
         for (i = 1; i < width - 1; ++i) {
-            bfont_draw(buffer, bufwidth, opaque, ' ');
+            bfont_draw(buf + (y + j) * bufwidth + x + i, bufwidth, opaque, ' ');
         }
     }
 
@@ -253,7 +250,8 @@ void drawVirtualKeyboard() {
     int width = 640;
     int key_spacing = 15;  // Space between keys
     uint8 opaque = 1;      // Set opaque to true for drawing the box
-    uint32 color = 0xFFFFFF; // Color for the box
+    uint32 normalColor = 0x000FFF; // Color for the highlight box (e.g., white)
+    uint32 highlightColor = 0x000000; // Normal key color (e.g., black)
 
     for (int i = 0; i < VK_ROWS; ++i) {
         const char **row = (shiftActive) ? shiftKeyboardLayout[i] : keyboardLayout[i];
@@ -265,12 +263,13 @@ void drawVirtualKeyboard() {
 
             int key_width = BFONT_THIN_WIDTH; // Default key width
 
+            // Draw the key's highlight if it's the selected one
             if (i == vk_row && j == vk_col) {
-                bfont_set_foreground_color(0x000000); // Black color for highlight
                 // Draw background highlight
-                bfont_draw_box(vram_s, width, x - 2, y, key_width + 4, line_spacing - 2, opaque, color);
+                bfont_draw_box(vram_s, width, x - 2, y, key_width + 4, line_spacing - 2, opaque, highlightColor);
+                bfont_set_foreground_color(0xFFFFFF); // Set the foreground color for the key
             } else {
-                bfont_set_foreground_color(0xFFFFFF); // White color for normal
+                bfont_set_foreground_color(normalColor); // White color for normal
             }
 
             // Draw the key
@@ -278,23 +277,23 @@ void drawVirtualKeyboard() {
             if (strcmp(key, "↑") == 0) {
                 // bfont_set_encoding(BFONT_CODE_RAW);
 				// bfont_set_foreground_color(0x000000); // White color for normal
-                bfont_draw_str(vram_s + y * width + x, width, opaque, "^");
+                bfont_draw_str(vram_s + y * width + x, width, !opaque, "^");
 				// bfont_set_foreground_color(0xFFFFFF); // Black color for highlight
                 // bfont_set_encoding(BFONT_CODE_ISO8859_1);
             } else if (strcmp(key, "↓") == 0) {
                 // bfont_set_encoding(BFONT_CODE_RAW);
-                bfont_draw_str(vram_s + y * width + x, width, opaque, "v");
+                bfont_draw_str(vram_s + y * width + x, width, !opaque, "v");
                 // bfont_set_encoding(BFONT_CODE_ISO8859_1);
             } else if (strcmp(key, "←") == 0) {
                 // bfont_set_encoding(BFONT_CODE_RAW);
-                bfont_draw_str(vram_s + y * width + x, width, opaque, "<");
+                bfont_draw_str(vram_s + y * width + x, width, !opaque, "<");
                 // bfont_set_encoding(BFONT_CODE_ISO8859_1);
             } else if (strcmp(key, "→") == 0) {
                 // bfont_set_encoding(BFONT_CODE_RAW);
-                bfont_draw_str(vram_s + y * width + x, width, opaque, ">");
+                bfont_draw_str(vram_s + y * width + x, width, !opaque, ">");
                 // bfont_set_encoding(BFONT_CODE_ISO8859_1);
             } else {
-                bfont_draw_str(vram_s + y * width + x, width, opaque, key);
+                bfont_draw_str(vram_s + y * width + x, width, !opaque, key);
             }
 
             x += key_width + key_spacing; // Move to the next character position
@@ -505,7 +504,6 @@ static void joyUpdate(SDL_Joystick *joystick) {
 
 // Handle virtual keyboard navigation if visible
 if (virtual_keyboard_visible) {
-    drawVirtualKeyboard(); 
     static int lastNavState = 0;
     static int navTimer = 0; // Timer for continuous navigation
     static const int navDelay = 10; // Initial delay before continuous navigation starts
@@ -555,6 +553,7 @@ if (virtual_keyboard_visible) {
             printf("Selected character: %c\n", selectedChar);
         }
     }
+            drawVirtualKeyboard(); 
 	// return; // dont generate any other inputs when VKB is active
 }
 
@@ -573,7 +572,9 @@ if (virtual_keyboard_visible) {
 		if ((buttons&CONT_DPAD_DOWN)) hat|=SDL_HAT_DOWN;
 		if ((buttons&CONT_DPAD_LEFT)) hat|=SDL_HAT_LEFT;
 		if ((buttons&CONT_DPAD_RIGHT)) hat|=SDL_HAT_RIGHT;
-        SDL_PrivateJoystickHat(joystick, 0, hat);
+        if (!virtual_keyboard_visible) {
+            SDL_PrivateJoystickHat(joystick, 0, hat);
+        }
     }
 	if ((changed)&(CONT_DPAD2_UP|CONT_DPAD2_DOWN|CONT_DPAD2_LEFT|CONT_DPAD2_RIGHT)) {
         int hat = SDL_HAT_CENTERED;
@@ -581,7 +582,9 @@ if (virtual_keyboard_visible) {
 		if (!(buttons&CONT_DPAD2_DOWN)) hat|=SDL_HAT_DOWN;
 		if (!(buttons&CONT_DPAD2_LEFT)) hat|=SDL_HAT_LEFT;
 		if (!(buttons&CONT_DPAD2_RIGHT)) hat|=SDL_HAT_RIGHT;
-        SDL_PrivateJoystickHat(joystick, 1, hat);
+        if (!virtual_keyboard_visible) {
+            SDL_PrivateJoystickHat(joystick, 1, hat);
+        }
     }
 
 	//Check buttons
@@ -589,14 +592,16 @@ if (virtual_keyboard_visible) {
 	for(i=0,max=0;i<sizeof(sdl_buttons)/sizeof(sdl_buttons[0]);i++) {
         if (changed & sdl_buttons[i]) {
 			int act=(buttons & sdl_buttons[i]);
-			SDL_PrivateJoystickButton(joystick, i, act?SDL_PRESSED:SDL_RELEASED);
+            if (!virtual_keyboard_visible) {
+			    SDL_PrivateJoystickButton(joystick, i, act?SDL_PRESSED:SDL_RELEASED);
+            }
             if (__sdl_dc_emulate_mouse)
 				SDL_PrivateMouseButton(act?SDL_PRESSED:SDL_RELEASED,i,0,0);
 			if (__sdl_dc_emulate_keyboard)
 			{
                 if (act)
                     max++;
-				if (max==4)
+				if (max==4) 
 				{
                     keysym.sym = SDLK_ESCAPE;
 					SDL_PrivateKeyboard(SDL_PRESSED,&keysym);
@@ -682,8 +687,10 @@ if (virtual_keyboard_visible) {
 	//In this case, do not flip the PRESSED/RELEASED!
 	if (cond->rtrig!=prev_rtrig)
 	{
-		if (__sdl_dc_emulate_vhkb_keyboard)
-			toggleVirtualKeyboard();
+        // Toggle virtual keyboard when R trigger is pressed and emulation is enabled
+        if (__sdl_dc_emulate_vhkb_keyboard == 1 && cond->rtrig && !prev_rtrig) {
+            toggleVirtualKeyboard();
+        }
 
 		if (__sdl_dc_emulate_keyboard)
 			if (((prev_rtrig) && (!cond->rtrig)) ||

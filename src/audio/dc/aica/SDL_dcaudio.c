@@ -23,6 +23,8 @@
 */
 #include "SDL_config.h"
 
+#ifdef SDL_AUDIO_DRIVER_DC
+
 /* Output dreamcast aica */
 
 #include <stdlib.h>
@@ -99,7 +101,7 @@ static SDL_AudioDevice *DCAUD_CreateDevice(int devindex)
 }
 
 AudioBootStrap DCAUD_bootstrap = {
-	"dcaudio", "Dreamcast AICA audio",
+	"dcAICAaudio", "Dreamcast AICA audio",
 	DCAUD_Available, DCAUD_CreateDevice
 };
 
@@ -300,6 +302,7 @@ static int DCAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 	sdl_dc_audiodevice=this;
 	sdl_dc_mixbuffer=(unsigned)sdl_dc_audiodevice->hidden->mixbuf;
 	/* We're ready to rock and roll. :-) */
+    printf("Dreamcast audio driver initialized: %s\n", DCAUD_bootstrap.name);	
 	irq_enable();
 	return(0);
 }
@@ -314,3 +317,4 @@ void SDL_DC_SetSoundBuffer(void *new_mixbuffer)
 {
 	sdl_dc_audiodevice->hidden->mixbuf=(Uint8 *)new_mixbuffer;
 }
+#endif

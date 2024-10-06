@@ -577,38 +577,63 @@ static void sdl_dc_blit_textured(void)
 #define DWI 640.0f
 #define DHE 480.0f
 
-	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert;
-	pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t *hdr;
+    pvr_vertex_t *vert;
+    pvr_poly_cxt_t cxt;
+    pvr_dr_state_t dr_state;
 
-	if (sdl_dc_wait_vblank)
-		pvr_wait_ready();
-	pvr_scene_begin();
-	pvr_list_begin(PVR_LIST_OP_POLY);
-	if (sdl_dc_buftex)
-	{
-		dcache_flush_range((unsigned)sdl_dc_buftex,sdl_dc_wtex*sdl_dc_htex*2);
-		while (!pvr_dma_ready());
-		pvr_txr_load_dma(sdl_dc_buftex, sdl_dc_memtex, sdl_dc_wtex*sdl_dc_htex*2,-1,NULL,0);
-//		pvr_txr_load(sdl_dc_buftex, sdl_dc_memtex, sdl_dc_wtex*sdl_dc_htex*2);
-	}
-	pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565|PVR_TXRFMT_NONTWIDDLED,sdl_dc_wtex, sdl_dc_htex, sdl_dc_memtex, PVR_FILTER_NEAREST);
-	pvr_poly_compile(&hdr, &cxt);
-	pvr_prim(&hdr, sizeof(hdr));
-	vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	vert.oargb = 0;
-	vert.flags = PVR_CMD_VERTEX;
-	vert.x = DX1; vert.y = DY1; vert.z = DZ1; vert.u = sdl_dc_u1; vert.v = sdl_dc_v1;
-	pvr_prim(&vert, sizeof(vert));
-	vert.x = DX1+DWI; vert.y = DY1; vert.z = DZ1; vert.u = sdl_dc_u2; vert.v = sdl_dc_v1;
-	pvr_prim(&vert, sizeof(vert));
-	vert.x = DX1; vert.y = DY1+DHE; vert.z = DZ1; vert.u = sdl_dc_u1; vert.v = sdl_dc_v2;
-	pvr_prim(&vert, sizeof(vert));
-	vert.x = DX1+DWI; vert.y = DY1+DHE; vert.z = DZ1; vert.u = sdl_dc_u2; vert.v = sdl_dc_v2;
-	vert.flags = PVR_CMD_VERTEX_EOL;
-	pvr_prim(&vert, sizeof(vert));
-	pvr_list_finish();
-	pvr_scene_finish();
+    if (sdl_dc_wait_vblank)
+        pvr_wait_ready();
+
+    pvr_scene_begin();
+    pvr_list_begin(PVR_LIST_OP_POLY);
+
+    if (sdl_dc_buftex)
+    {
+        dcache_flush_range((unsigned)sdl_dc_buftex, sdl_dc_wtex*sdl_dc_htex*2);
+        while (!pvr_dma_ready());
+        pvr_txr_load_dma(sdl_dc_buftex, sdl_dc_memtex, sdl_dc_wtex*sdl_dc_htex*2, -1, NULL, 0);
+        // pvr_txr_load(sdl_dc_buftex, sdl_dc_memtex, sdl_dc_wtex*sdl_dc_htex*2);
+    }
+
+    pvr_dr_init(&dr_state);
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565|PVR_TXRFMT_NONTWIDDLED, sdl_dc_wtex, sdl_dc_htex, sdl_dc_memtex, PVR_FILTER_NEAREST);
+
+    hdr = (pvr_poly_hdr_t *)pvr_dr_target(dr_state);
+    pvr_poly_compile(hdr, &cxt);
+    pvr_dr_commit(hdr);
+
+    vert = pvr_dr_target(dr_state);
+    vert->argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+    vert->oargb = 0;
+    vert->flags = PVR_CMD_VERTEX;
+    vert->x = DX1; vert->y = DY1; vert->z = DZ1; vert->u = sdl_dc_u1; vert->v = sdl_dc_v1;
+    pvr_dr_commit(vert);
+
+    vert = pvr_dr_target(dr_state);
+    vert->argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+    vert->oargb = 0;
+    vert->flags = PVR_CMD_VERTEX;
+    vert->x = DX1+DWI; vert->y = DY1; vert->z = DZ1; vert->u = sdl_dc_u2; vert->v = sdl_dc_v1;
+    pvr_dr_commit(vert);
+
+    vert = pvr_dr_target(dr_state);
+    vert->argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+    vert->oargb = 0;
+    vert->flags = PVR_CMD_VERTEX;
+    vert->x = DX1; vert->y = DY1+DHE; vert->z = DZ1; vert->u = sdl_dc_u1; vert->v = sdl_dc_v2;
+    pvr_dr_commit(vert);
+
+    vert = pvr_dr_target(dr_state);
+    vert->argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+    vert->oargb = 0;
+    vert->flags = PVR_CMD_VERTEX_EOL;
+    vert->x = DX1+DWI; vert->y = DY1+DHE; vert->z = DZ1; vert->u = sdl_dc_u2; vert->v = sdl_dc_v2;
+    pvr_dr_commit(vert);
+
+    pvr_dr_finish();
+    pvr_list_finish();
+    pvr_scene_finish();
 
 #undef DX1
 #undef DY1
@@ -617,10 +642,10 @@ static void sdl_dc_blit_textured(void)
 #undef DHE
 }
 #endif
-
+extern int virtual_keyboard_visible;
+extern void drawVirtualKeyboard(void* fb);
 static int DC_FlipHWSurface(_THIS, SDL_Surface *surface)
 {
-
 #ifndef SDL_VIDEO_OPENGL
 	if (sdl_dc_textured)
 		sdl_dc_blit_textured();
@@ -641,6 +666,7 @@ static int DC_FlipHWSurface(_THIS, SDL_Surface *surface)
 #endif
 		if (sdl_dc_wait_vblank)
 			vid_waitvbl();
+
 	return(0);
 }
 

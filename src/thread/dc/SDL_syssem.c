@@ -29,6 +29,7 @@
 
 #include "SDL_config.h"
 
+#if defined(SDL_THREAD_DC) || (defined(SDL_THREAD_PTHREAD) && defined(__DREAMCAST__))
 /* An implementation of semaphores using mutexes and condition variables */
 
 #include <stdlib.h>
@@ -185,3 +186,4 @@ int SDL_SemPost(SDL_sem *sem)
 }
 
 #endif /* SDL_THREADS_DISABLED */
+#endif // #if defined(SDL_THREAD_DC) || defined(SDL_THREAD_PTHREAD)

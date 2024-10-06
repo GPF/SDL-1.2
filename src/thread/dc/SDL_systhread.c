@@ -26,6 +26,7 @@
 */
 #include "SDL_config.h"
 
+#ifdef SDL_THREAD_DC
 /* Thread management routines for SDL */
 
 #include "SDL_error.h"
@@ -70,4 +71,4 @@ void SDL_SYS_KillThread(SDL_Thread *thread)
 {
 	thd_destroy(thread->handle);
 }
-
+#endif
