@@ -597,7 +597,7 @@ static void sdl_dc_blit_textured(void)
     }
 
     pvr_dr_init(&dr_state);
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565|PVR_TXRFMT_NONTWIDDLED, sdl_dc_wtex, sdl_dc_htex, sdl_dc_memtex, PVR_FILTER_NEAREST);
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565|PVR_TXRFMT_NONTWIDDLED, sdl_dc_wtex, sdl_dc_htex, sdl_dc_memtex, PVR_FILTER_NONE);//any filtering makes fps dip in software rendering
 
     hdr = (pvr_poly_hdr_t *)pvr_dr_target(dr_state);
     pvr_poly_compile(hdr, &cxt);
