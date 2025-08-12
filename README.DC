@@ -1,174 +1,94 @@
-SDL for Dreamcast 
-Upgraded by GPF (Troy Davis) to latest version 1.2.15 - https://github.com/GPF/SDL-1.2
+# SDL 1.2 — Dreamcast (KallistiOS)
 
-**Added virtual Keyboard Popup Window
-call SDL_DC_EmulateVirtualKeyboard(SDL_TRUE);
-will open simple onscreen bios font keyboard when joystick is first opened.
-, Press A button to submit keypress, press right trigger to toggle the virtual keyboard on and off
+Dreamcast support for SDL 1.2 targeting the **KallistiOS (KOS)** SDK. Optional OpenGL support uses **GLdc** (provided by **kos-ports**).
 
+**Scope:** Community-maintained. Changes are isolated to Dreamcast code paths and do not affect other platforms.
 
-This version is based off SDL 1.2.13 from https://github.com/ianmicheal/SDL-dreamhal--GLDC
-(beta2)
-by
-	BERO
-	berobero@users.sourceforge.net 
+## Prerequisites
 
-	http://www.geocities.co.jp/Playtown/2004/
+* KOS toolchain installed; environment sourced:
 
-this work with kos-newlib
-http://sourceforge.net/projects/dcquake/
+  ```sh
+  . /path/to/kos/environ.sh
+  ```
+* (Optional) OpenGL via **GLdc** from **kos-ports**.
 
-compile
-- source environ.sh (from the KOS distribution)
-- make -f Makefile.dc
+## Building (no autoconf)
 
-compile with gl support
-- install latest libgl from http://sourceforge.net/projects/dcquake/
-- uncomment GL=1 in Makefile.dc
-- make -f Makefile.dc clean
-- make -f Makefile.dc
+Use the platform makefile:
 
-install
-- copy include/*.h and libSDL.a or libSDL_gl.a for your enviroment
+```sh
+# Plain (no GL)
+make -f Makefile.dc
 
-changelog:
+# With OpenGL (GLdc)
+# set GL=1 in Makefile.dc
+make -f Makefile.dc clean
+make -f Makefile.dc
+```
 
-beta2
-- OpenGL support
-- Hardware page flip support
+### Artifacts & Installation
 
-beta
-- thread, timer don't tested so much.
-- not support OpenGL
+* Builds produce `libSDL.a` (and `libSDL_gl.a` when `GL=1`) and headers under `include/`.
+* **Current behavior:** `Makefile.dc` **automatically installs** after a successful build to:
 
--- integrating back into main branch
-# DREAMCAST SDL-DREAMHAL Version 1.0
-**Based on SDL 1.2.13**
+  * `KOS/addons/include/dreamcast/SDL` (headers)
+  * `KOS/addons/library/dreamcast` (library)
+* **Future (when integrated via kos-ports):** installation paths and steps will be handled by **kos-ports**; consult kos-ports documentation when that transition happens.
 
-## Overview
-SDL-DREAMHAL is a customized version of SDL (Simple DirectMedia Layer) tailored for the Dreamcast. It leverages GLDC for rendering, providing significant performance enhancements for 2D blitting and other operations. This version includes updates for fixed headers and multiple defines.
+## Video backends (Dreamcast)
 
-## Features
-- **Dreamcast Hardware + OpenGL**: Optimized for SDL FAST BLIT SPEED.
-- **2D Blit Speed Benchmark**: Significant improvements in both software and hardware modes.
-- **Integration with GLDC**: Utilizes Kazade's GLDC library for enhanced OpenGL compatibility and performance.
+* **DMA** – double-buffered blits to PVR via DMA (default).
+* **TEXTURED** – virtual resolutions + scaling via textured blits.
+* **DIRECT** – direct framebuffer path (may be faster in some cases).
 
-![Screenshot of SDL-DREAMHAL](https://github.com/ianmicheal/SDL-dreamhal--GLDC/blob/main/benchmark.png)
+Select a backend via `Makefile.dc` or by API before `SDL_SetVideoMode`.
 
-## Dreamcast Integration
-- **Correct OpenGL integration.**: 
-- **Textured video driver for virtual resolutions.**: 
-- **Direct framebuffer video driver using store queues.**:
-- **Mouse emulation using analog pad**: 
-- **Mapped keys as pad buttons.**:
-- **Two texture internal color mode supported: RGB5551 and RGB4444.**:
-- **Fast threaded audio driver.**:
+## Dreamcast-specific API (`include/SDL/SDL_dreamcast.h`)
 
-  ## SDL
-SDL is a cross-platform multimedia library designed to provide low-level access to audio, keyboard, mouse, joystick, 3D hardware via OpenGL, and 2D video framebuffer.
+**Video & display**
 
-### New Features
-- **Upgraded Blit Speed**: Utilizing moops dreamhal SH4 ASM memcpy and memset.
-- **GLDC Integration**: Improved compatibility and performance with OpenGL 1.2.
+* `SDL_DC_SetVideoDriver(SDL_DC_DMA_VIDEO | SDL_DC_TEXTURED_VIDEO | SDL_DC_DIRECT_VIDEO)` — choose backend (call before `SDL_SetVideoMode`).
+* `SDL_DC_SetWindow(width, height)` — set virtual window size (textured mode).
 
-### Video Drivers for Dreamcast
-- **SDL_DC_DMA_VIDEO** (default): Fastest video driver using double buffer.
-- **SDL_DC_TEXTURED_VIDEO**: Allows virtual resolutions and scaling using hardware texture.
-- **SDL_DC_DIRECT_VIDEO**: Direct buffer video driver, potentially faster than DMA without double buffer.
+**Timing / refresh**
 
-### Configuration Options
-- **SDL_DC_VerticalWait(SDL_bool value)**: Enable/disable wait for vertical retrace before blitting to PVR hardware.
-- **SDL_DC_ShowAskHz(SDL_bool value)**: Enable/disable ask for 50/60Hz video (only for PAL Dreamcasts).
-- **SDL_DC_Default60Hz(SDL_bool value)**: Set default display to 60Hz (only for PAL Dreamcasts).
-- **SDL_DC_MapKey(int joy, SDL_DC_button button, SDLKey key)**: Map Dreamcast buttons to SDL keys.
+* `SDL_DC_VerticalWait(enable)` — wait for vertical retrace before presenting.
+* `SDL_DC_ShowAskHz(enable)` — (PAL) show 50/60 Hz selector at startup.
+* `SDL_DC_Default60Hz(enable)` — (PAL) default to 60 Hz.
 
+**Input mapping**
 
+* `SDL_DC_MapKey(joy, button, key)` — map a Dreamcast controller button to an `SDLKey`.
 
-## Additional Resources
+**Controller emulation helpers**
 
-- **PORTED TO SDL + OpenGL Dreamhal + GLDC Demos**:
-- **SDL[DREAMHAL]+[GLDC]KOS2.0 TWINKLE STAR DEMO HARDWARE**:
-  - [Demo 1](https://youtu.be/aTKOW4GrLsQ)
-  -  ** SDL[DREAMHAL]+[GLDC]KOS2.0 BLENDING GLASS CUBE HARDWARE**:
-  - [Demo 2](https://youtu.be/GM4JnKxp1ZQ)
-  - ** SDL[DREAMHAL]+[GLDC]KOS2.0 SPINNING TEXTURES CUBE 60FPS
-  - [Demo 3](https://youtu.be/G0KFthogrPg)
-  - **SDLQUAKE DREAMHAL**:
-  - [Demo port quake 1](https://youtu.be/QiEo3FNNEZc).
-  - **OLD VERSION CANT BE COMPILED OR USED ON KOS2.0**
-   - **Old Version**: [SDL by Chui](http://chui.dcemu.co.uk/sdl.html)
+* `SDL_DC_EmulateVirtualKeyboard(enable)` — simple BIOS-font on-screen keyboard.
+  *Runtime controls:* **A** submits; **Right Trigger** toggles.
+* `SDL_DC_EmulateKeyboard(enable)` — controller→keyboard emulation.
+* `SDL_DC_EmulateMouse(enable)` — controller→mouse emulation.
 
----
+**Audio**
 
-For a complete list of features and detailed documentation, please visit the [GLDC repository](https://gitlab.com/simulant/GLdc).
+* `SDL_DC_SetSoundBuffer(ptr)` / `SDL_DC_RestoreSoundBuffer()` — override/restore audio buffer.
 
-## Credits
-- **BERO**: Original work  for SDL on Dreamcast.
-- **Chui**: Original work and improvements for SDL on Dreamcast.
-- **Kazade**: GLDC library and enhancements.
-- **MRNEO240**:GLDC Optimizing and Support.
-- DreamHal -- https://github.com/sega-dreamcast/dreamhal/
-GNU Lesser General Public License, version 2.1
-https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
+> These functions are Dreamcast-only; they are no-ops on other platforms.
 
-# SDL-DREAMHAL Version 1.0
-**Based on SDL 1.2.13**
+## Tests
 
-## Overview
-SDL-DREAMHAL is a customized version of SDL (Simple DirectMedia Layer) tailored for the Dreamcast. It leverages GLDC for rendering, providing significant performance enhancements for 2D blitting and other operations. This version includes updates for fixed headers and multiple defines.
+SDL’s generic `test/` programs don’t include Dreamcast makefiles. Validate on hardware or an emulator using your own minimal harness or application (video/input/audio).
 
-## Features
-- **Dreamcast Hardware + OpenGL**: Optimized for SDL FAST BLIT SPEED.
-- **2D Blit Speed Benchmark**: Significant improvements in both software and hardware modes.
-- **Integration with GLDC**: Utilizes Kazade's GLDC library for enhanced OpenGL compatibility and performance.
+## License
 
-[[https://github.com/ianmicheal/SDL-dreamhal--GLDC/main/benchmark.png|alt=benchmark]]
+SDL 1.2 is licensed under **LGPL-2.1**. See `COPYING`.
 
-## Benchmark Results
-| Resolution | Mode      | Slow Points (frames/sec) | Fast Points (frames/sec) | Rect Fill (rects/sec) | 32x32 Blits (blits/sec) |
-|------------|-----------|--------------------------|--------------------------|-----------------------|-------------------------|
-| 320x240    | Software  | 0.20885                  | 18.4372                  | 652.125               | 1327.28                 |
-| 320x240    | Hardware  | 0.208823                 | 18.4544                  | 652.333               | 1327.28                 |
-| 640x480    | Software  | 0.0250253                | 4.47263                  | 156.312               | 1277.21                 |
-| 640x480    | Hardware  | 0.0250252                | 4.47271                  | 156.3                 | 1277.6                  |
+## Acknowledgments
 
-## Dreamcast Integration
-- **Arch**: Shutting down kernel.
-- **Maple**: Final stats -- device count = 2, vbl_cntr = 56270, dma_cntr = 56266.
-- **Video Mode**: Set to 640x480 NTSC.
-
-## Simple DirectMedia Layer (SDL)
-SDL is a cross-platform multimedia library designed to provide low-level access to audio, keyboard, mouse, joystick, 3D hardware via OpenGL, and 2D video framebuffer.
-
-### New Features
-- **Upgraded Blit Speed**: Utilizing moops dreamhal SH4 ASM memcpy and memset.
-- **GLDC Integration**: Improved compatibility and performance with OpenGL 1.2.
-
-### Video Drivers for Dreamcast
-- **SDL_DC_DMA_VIDEO** (default): Fastest video driver using double buffer.
-- **SDL_DC_TEXTURED_VIDEO**: Allows virtual resolutions and scaling using hardware texture.
-- **SDL_DC_DIRECT_VIDEO**: Direct buffer video driver, potentially faster than DMA without double buffer.
-
-### Configuration Options
-- **SDL_DC_VerticalWait(SDL_bool value)**: Enable/disable wait for vertical retrace before blitting to PVR hardware.
-- **SDL_DC_ShowAskHz(SDL_bool value)**: Enable/disable ask for 50/60Hz video (only for PAL Dreamcasts).
-- **SDL_DC_Default60Hz(SDL_bool value)**: Set default display to 60Hz (only for PAL Dreamcasts).
-- **SDL_DC_MapKey(int joy, SDL_DC_button button, SDLKey key)**: Map Dreamcast buttons to SDL keys.
-
-## Credits
-- **Chui**: Original work and improvements for SDL on Dreamcast.
-- **Kazade**: GLDC library and enhancements.
-
-## Additional Resources
-- **Old Version**: [SDL by Chui](http://chui.dcemu.co.uk/sdl.html)
-- **OpenGL Dreamhal + GLDC Demos**:
-  - [Demo 1](https://streamable.com/55982r)
-  - [Demo 2](https://streamable.com/kvk4ez)
-  - [Demo 3](https://streamable.com/5k8lsk)
-
----
-
-For a complete list of features and detailed documentation, please visit the [GLDC repository](https://gitlab.com/simulant/GLdc).
-
-
-
+* **Troy Davis (GPF)** — Dreamcast updates/maintenance, GLdc integration, virtual keyboard.
+* **BERO** — original Dreamcast SDL work
+* **Chui** — Dreamcast improvements
+* **Ian Michael** — Dreamcast DreamHAL/GLdc lineage
+* **Kazade** — GLdc
+* **MRNEO240** — GLdc optimizations and support
+* **DreamHAL project** — related Dreamcast work
+* **Contributors** — fixes and maintenance over time
