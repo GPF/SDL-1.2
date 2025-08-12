@@ -118,68 +118,66 @@ static void mouse_update(void) {
 }
 
 static void keyboard_update(void) {
-    static kbd_mods_t last_mods = {0};
     maple_device_t *dev;
     SDL_keysym keysym = {0};
+    static uint8_t key_states[sizeof(sdl_key)/sizeof(sdl_key[0])] = {0}; // Track key states
 
     if(!(dev = maple_enum_type(0, MAPLE_FUNC_KEYBOARD)))
         return;
 
-    while(1) {
-        int raw = kbd_queue_pop(dev, 0);
-        if(raw == KBD_QUEUE_END) break;
+    // First check the current state of all keys
+    kbd_state_t *state = maple_dev_status(dev);
+    if(!state) return;
 
-        // Decode the raw keyboard event
-        kbd_key_t key = (kbd_key_t)(raw & 0xFF);
-        kbd_mods_t mods = { .raw = (raw >> 8) & 0xFF };
-        uint8_t key_state = (raw >> 16) & 0xFF; // Extract key state (press/release)
-        
-        // Calculate modifier changes
-        uint8_t mod_diff = mods.raw ^ last_mods.raw;
-        
-        // Handle modifier keys first
-        if(mod_diff) {
-            if(mod_diff & KBD_MOD_LSHIFT) {
-                keysym.sym = SDLK_LSHIFT;
-                SDL_PrivateKeyboard(mods.lshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            if(mod_diff & KBD_MOD_RSHIFT) {
-                keysym.sym = SDLK_RSHIFT;
-                SDL_PrivateKeyboard(mods.rshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            if(mod_diff & KBD_MOD_LCTRL) {
-                keysym.sym = SDLK_LCTRL;
-                SDL_PrivateKeyboard(mods.lctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            if(mod_diff & KBD_MOD_RCTRL) {
-                keysym.sym = SDLK_RCTRL;
-                SDL_PrivateKeyboard(mods.rctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            if(mod_diff & KBD_MOD_LALT) {
-                keysym.sym = SDLK_LALT;
-                SDL_PrivateKeyboard(mods.lalt ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            if(mod_diff & KBD_MOD_RALT) {
-                keysym.sym = SDLK_RALT;
-                SDL_PrivateKeyboard(mods.ralt ? SDL_PRESSED : SDL_RELEASED, &keysym);
-            }
-            last_mods = mods;
-        }
+    // Check regular keys
+    for(int i = 0; i < (int)(sizeof(sdl_key)/sizeof(sdl_key[0])); i++) {
+        if(sdl_key[i] == 0) continue; // Skip unmapped keys
 
-        // Skip if no key pressed/released
-        if(key == KBD_KEY_NONE)
-            continue;
-
-        // Map KOS key to SDL key
-        if(key >= 0 && key < (int)(sizeof(sdl_key)/sizeof(sdl_key[0]))) {
-            if(sdl_key[key] == 0) continue;
+        // Detect key state changes
+        if(state->key_states[i].is_down != key_states[i]) {
+            keysym.sym = sdl_key[i];
+            SDL_PrivateKeyboard(state->key_states[i].is_down ? SDL_PRESSED : SDL_RELEASED, &keysym);
             
-            keysym.sym = sdl_key[key];
+            // Debug output
+            printf("Key: 0x%02X (%d), SDL Key: 0x%04X, Action: %s\n", 
+                   i, i, sdl_key[i], 
+                   state->key_states[i].is_down ? "PRESS" : "RELEASE");
             
-            // Determine if this is a press or release event
-            // Bit 0 of key_state indicates pressed (1) or released (0)
-            SDL_PrivateKeyboard((key_state & 0x1) ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            // Update our state tracker
+            key_states[i] = state->key_states[i].is_down;
         }
+    }
+
+    // Handle modifier keys (same as before)
+    static kbd_mods_t last_mods = {0};
+    uint8_t mod_diff = state->last_modifiers.raw ^ last_mods.raw;
+    
+    if(mod_diff) {
+        if(mod_diff & KBD_MOD_LSHIFT) {
+            keysym.sym = SDLK_LSHIFT;
+            SDL_PrivateKeyboard(state->last_modifiers.lshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        if(mod_diff & KBD_MOD_RSHIFT) {
+            keysym.sym = SDLK_RSHIFT;
+            SDL_PrivateKeyboard(state->last_modifiers.rshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        if(mod_diff & KBD_MOD_LCTRL) {
+            keysym.sym = SDLK_LCTRL;
+            SDL_PrivateKeyboard(state->last_modifiers.lctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        if(mod_diff & KBD_MOD_RCTRL) {
+            keysym.sym = SDLK_RCTRL;
+            SDL_PrivateKeyboard(state->last_modifiers.rctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        if(mod_diff & KBD_MOD_LALT) {
+            keysym.sym = SDLK_LALT;
+            SDL_PrivateKeyboard(state->last_modifiers.lalt ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        if(mod_diff & KBD_MOD_RALT) {
+            keysym.sym = SDLK_RALT;
+            SDL_PrivateKeyboard(state->last_modifiers.ralt ? SDL_PRESSED : SDL_RELEASED, &keysym);
+        }
+        last_mods = state->last_modifiers;
     }
 }
 
