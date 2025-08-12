@@ -40,9 +40,16 @@ make -f Makefile.dc
 
 * **DMA** – double-buffered blits to PVR via DMA (default).
 * **TEXTURED** – virtual resolutions + scaling via textured blits.
-* **DIRECT** – direct framebuffer path (may be faster in some cases).
+* **DIRECT** – direct framebuffer path (uses SH-4 store queues; may be faster in some cases).
 
 Select a backend via `Makefile.dc` or by API before `SDL_SetVideoMode`.
+
+## Additional capabilities
+
+* **OpenGL via GLdc** — optional GL 1.x path when `GL=1`.
+* **Analog-pad mouse emulation** — map the analog pad to mouse input when enabled.
+* **Button→key mapping** — map controller buttons to `SDLKey`.
+* **Texture formats** — supports 16-bit formats commonly used on Dreamcast (e.g., **RGB5551**, **RGB4444**).
 
 ## Dreamcast-specific API (`include/SDL/SDL_dreamcast.h`)
 
@@ -64,7 +71,7 @@ Select a backend via `Makefile.dc` or by API before `SDL_SetVideoMode`.
 **Controller emulation helpers**
 
 * `SDL_DC_EmulateVirtualKeyboard(enable)` — simple BIOS-font on-screen keyboard.
-  *Runtime controls:* **A** submits; **Right Trigger** toggles.
+    *Runtime controls:* **A** submits; **Right Trigger** toggles.
 * `SDL_DC_EmulateKeyboard(enable)` — controller→keyboard emulation.
 * `SDL_DC_EmulateMouse(enable)` — controller→mouse emulation.
 
@@ -74,6 +81,11 @@ Select a backend via `Makefile.dc` or by API before `SDL_SetVideoMode`.
 
 > These functions are Dreamcast-only; they are no-ops on other platforms.
 
+### Defaults
+
+* **Audio:** AICA backend
+* **Concurrency:** KOS threads & timers
+
 ## Tests
 
 SDL’s generic `test/` programs don’t include Dreamcast makefiles. Validate on hardware or an emulator using your own minimal harness or application (video/input/audio).
@@ -81,6 +93,11 @@ SDL’s generic `test/` programs don’t include Dreamcast makefiles. Validate o
 ## License
 
 SDL 1.2 is licensed under **LGPL-2.1**. See `COPYING`.
+
+### Third-party notices
+
+* This Dreamcast backend includes **only** SH-4 optimized memory routines (`memcpy`, `memset`, `memmove`, `memcmp`) derived from DreamHAL. These files are **Public Domain**; original file headers are retained in-file.
+* No other DreamHAL components are included.
 
 ## Acknowledgments
 
