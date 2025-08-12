@@ -46,25 +46,33 @@
 
 extern unsigned __sdl_dc_mouse_shift;
 
-const static unsigned short sdl_key[]= {
-	/*0*/	0, 0, 0, 0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-		'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-		'u', 'v', 'w', 'x', 'y', 'z',
-	/*1e*/	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-	/*28*/	SDLK_RETURN, SDLK_ESCAPE, SDLK_BACKSPACE, SDLK_TAB, SDLK_SPACE, SDLK_MINUS, SDLK_PLUS, SDLK_LEFTBRACKET, 
-	SDLK_RIGHTBRACKET, SDLK_BACKSLASH , 0, SDLK_SEMICOLON, SDLK_QUOTE,
-	/*35*/	'~', SDLK_COMMA, SDLK_PERIOD, SDLK_SLASH, SDLK_CAPSLOCK, 
-	SDLK_F1, SDLK_F2, SDLK_F3, SDLK_F4, SDLK_F5, SDLK_F6, SDLK_F7, SDLK_F8, SDLK_F9, SDLK_F10, SDLK_F11, SDLK_F12,
-	/*46*/	SDLK_PRINT, SDLK_SCROLLOCK, SDLK_PAUSE, SDLK_INSERT, SDLK_HOME, SDLK_PAGEUP, SDLK_DELETE, SDLK_END, SDLK_PAGEDOWN, SDLK_RIGHT, SDLK_LEFT, SDLK_DOWN, SDLK_UP,
-	/*53*/	SDLK_NUMLOCK, SDLK_KP_DIVIDE, SDLK_KP_MULTIPLY, SDLK_KP_MINUS, SDLK_KP_PLUS, SDLK_KP_ENTER, 
-	SDLK_KP1, SDLK_KP2, SDLK_KP3, SDLK_KP4, SDLK_KP5, SDLK_KP6,
-	/*5f*/	SDLK_KP7, SDLK_KP8, SDLK_KP9, SDLK_KP0, SDLK_KP_PERIOD, 0 /* S3 */
+const static unsigned short sdl_key[] = {
+    /* 0x00 */ 0, 0, 0, 0,
+    /* 0x04 */ SDLK_a, SDLK_b, SDLK_c, SDLK_d, SDLK_e, SDLK_f, SDLK_g, SDLK_h, SDLK_i,
+    /* 0x0d */ SDLK_j, SDLK_k, SDLK_l, SDLK_m, SDLK_n, SDLK_o, SDLK_p, SDLK_q, SDLK_r,
+    /* 0x16 */ SDLK_s, SDLK_t, SDLK_u, SDLK_v, SDLK_w, SDLK_x, SDLK_y, SDLK_z,
+    /* 0x1e */ SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_0,
+    /* 0x28 */ SDLK_RETURN, SDLK_ESCAPE, SDLK_BACKSPACE, SDLK_TAB, SDLK_SPACE,
+    /* 0x2d */ SDLK_MINUS, SDLK_EQUALS, SDLK_LEFTBRACKET, SDLK_RIGHTBRACKET, SDLK_BACKSLASH,
+    /* 0x32 */ 0, SDLK_SEMICOLON, SDLK_QUOTE, SDLK_BACKQUOTE,
+    /* 0x36 */ SDLK_COMMA, SDLK_PERIOD, SDLK_SLASH, SDLK_CAPSLOCK,
+    /* 0x3a */ SDLK_F1, SDLK_F2, SDLK_F3, SDLK_F4, SDLK_F5, SDLK_F6,
+    /* 0x40 */ SDLK_F7, SDLK_F8, SDLK_F9, SDLK_F10, SDLK_F11, SDLK_F12,
+    /* 0x46 */ SDLK_PRINT, SDLK_SCROLLOCK, SDLK_PAUSE,
+    /* 0x49 */ SDLK_INSERT, SDLK_HOME, SDLK_PAGEUP,
+    /* 0x4c */ SDLK_DELETE, SDLK_END, SDLK_PAGEDOWN,
+    /* 0x4f */ SDLK_RIGHT, SDLK_LEFT, SDLK_DOWN, SDLK_UP,
+    /* 0x53 */ SDLK_NUMLOCK,
+    /* 0x54 */ SDLK_KP_DIVIDE, SDLK_KP_MULTIPLY, SDLK_KP_MINUS, SDLK_KP_PLUS,
+    /* 0x58 */ SDLK_KP_ENTER,
+    /* 0x59 */ SDLK_KP1, SDLK_KP2, SDLK_KP3, SDLK_KP4, SDLK_KP5, SDLK_KP6,
+    /* 0x5f */ SDLK_KP7, SDLK_KP8, SDLK_KP9, SDLK_KP0, SDLK_KP_PERIOD,
+    /* 0x64 */ 0 /* S3 */
 };
-
-const static unsigned short sdl_shift[] = {
-	SDLK_LCTRL,SDLK_LSHIFT,SDLK_LALT,0 /* S1 */,
-	SDLK_RCTRL,SDLK_RSHIFT,SDLK_RALT,0 /* S2 */,
-};
+// const static unsigned short sdl_shift[] = {
+// 	SDLK_LCTRL,SDLK_LSHIFT,SDLK_LALT,0 /* S1 */,
+// 	SDLK_RCTRL,SDLK_RSHIFT,SDLK_RALT,0 /* S2 */,
+// };
 
 #define	MOUSE_WHEELUP 	(1<<4)
 #define	MOUSE_WHEELDOWN	(1<<5)
@@ -110,42 +118,69 @@ static void mouse_update(void) {
 }
 
 static void keyboard_update(void) {
-	static kbd_state_t old_state;
-    kbd_state_t	*state;
+    static kbd_mods_t last_mods = {0};
     maple_device_t *dev;
-    int shiftkeys;
-    SDL_keysym keysym;
-    int i;
+    SDL_keysym keysym = {0};
 
     if(!(dev = maple_enum_type(0, MAPLE_FUNC_KEYBOARD)))
         return;
 
-    state = maple_dev_status(dev);
+    while(1) {
+        int raw = kbd_queue_pop(dev, 0);
+        if(raw == KBD_QUEUE_END) break;
 
-    if(!state)
-        return;
-
-    shiftkeys = state->shift_keys ^ old_state.shift_keys;
-    for(i = 0; i < sizeof(sdl_shift); ++i) {
-        if((shiftkeys >> i) & 1) {
-            keysym.sym = sdl_shift[i];
-            SDL_PrivateKeyboard(((state->shift_keys >> i) & 1) ?
-                                SDL_PRESSED : SDL_RELEASED, &keysym);
-        }
-    }
-
-    for(i = 0; i < sizeof(sdl_key); ++i) {
-        if(state->matrix[i] != old_state.matrix[i]) {
-            int key = sdl_key[i];
-            if(key) {
-                keysym.sym = key;
-                SDL_PrivateKeyboard(state->matrix[i] ?
-                                    SDL_PRESSED : SDL_RELEASED, &keysym);
+        // Decode the raw keyboard event
+        kbd_key_t key = (kbd_key_t)(raw & 0xFF);
+        kbd_mods_t mods = { .raw = (raw >> 8) & 0xFF };
+        uint8_t key_state = (raw >> 16) & 0xFF; // Extract key state (press/release)
+        
+        // Calculate modifier changes
+        uint8_t mod_diff = mods.raw ^ last_mods.raw;
+        
+        // Handle modifier keys first
+        if(mod_diff) {
+            if(mod_diff & KBD_MOD_LSHIFT) {
+                keysym.sym = SDLK_LSHIFT;
+                SDL_PrivateKeyboard(mods.lshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
             }
+            if(mod_diff & KBD_MOD_RSHIFT) {
+                keysym.sym = SDLK_RSHIFT;
+                SDL_PrivateKeyboard(mods.rshift ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            }
+            if(mod_diff & KBD_MOD_LCTRL) {
+                keysym.sym = SDLK_LCTRL;
+                SDL_PrivateKeyboard(mods.lctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            }
+            if(mod_diff & KBD_MOD_RCTRL) {
+                keysym.sym = SDLK_RCTRL;
+                SDL_PrivateKeyboard(mods.rctrl ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            }
+            if(mod_diff & KBD_MOD_LALT) {
+                keysym.sym = SDLK_LALT;
+                SDL_PrivateKeyboard(mods.lalt ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            }
+            if(mod_diff & KBD_MOD_RALT) {
+                keysym.sym = SDLK_RALT;
+                SDL_PrivateKeyboard(mods.ralt ? SDL_PRESSED : SDL_RELEASED, &keysym);
+            }
+            last_mods = mods;
+        }
+
+        // Skip if no key pressed/released
+        if(key == KBD_KEY_NONE)
+            continue;
+
+        // Map KOS key to SDL key
+        if(key >= 0 && key < (int)(sizeof(sdl_key)/sizeof(sdl_key[0]))) {
+            if(sdl_key[key] == 0) continue;
+            
+            keysym.sym = sdl_key[key];
+            
+            // Determine if this is a press or release event
+            // Bit 0 of key_state indicates pressed (1) or released (0)
+            SDL_PrivateKeyboard((key_state & 0x1) ? SDL_PRESSED : SDL_RELEASED, &keysym);
         }
     }
-
-    old_state = *state;
 }
 
 static __inline__ Uint32 myGetTicks(void)

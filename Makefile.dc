@@ -141,10 +141,10 @@ $(TARGET): copy_headers $(OBJS)
 	$(AR) rcs $(KOS_BASE)/addons/lib/$(KOS_ARCH)/$(TARGET) $(OBJS)
 
 copy_headers: copy_config
-	@if [ ! -d $(KOS_BASE)/addons/include/SDL ]; then \
-		mkdir -p $(KOS_BASE)/addons/include/SDL; \
+	@if [ ! -d $(KOS_BASE)/addons/include/dreamcast/SDL ]; then \
+		mkdir -p $(KOS_BASE)/addons/include/dreamcast/SDL; \
 	fi
-	@cp -R include/*.h $(KOS_BASE)/addons/include/SDL
+	@cp -R include/*.h $(KOS_BASE)/addons/include/dreamcast/SDL
 
 # Only copy config file if it has changed
 copy_config:
