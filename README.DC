@@ -9,7 +9,7 @@ Dreamcast support for SDL 1.2 targeting the **KallistiOS (KOS)** SDK. Optional O
 * KOS toolchain installed; environment sourced:
 
   ```sh
-  . /path/to/kos/environ.sh
+  . /opt/toolchains/dc/kos/environ.sh
   ```
 * (Optional) OpenGL via **GLdc** from **kos-ports**.
 
@@ -22,19 +22,29 @@ Use the platform makefile:
 make -f Makefile.dc
 
 # With OpenGL (GLdc)
-# set GL=1 in Makefile.dc
+# set GL=1 in Makefile.dc or
+make -f Makefile.dc clean && make -f Makefile.dc GL=1
+# (equivalently) GL=1 make -f Makefile.dc
+
+# remove installed headers/lib under KOS/addons
+make -f Makefile.dc uninstall
+
+# clean local objects only (does NOT remove installed files)
 make -f Makefile.dc clean
-make -f Makefile.dc
+
+# clean + uninstall
+make -f Makefile.dc distclean
 ```
 
 ### Artifacts & Installation
 
 * Builds produce `libSDL.a` (and `libSDL_gl.a` when `GL=1`) and headers under `include/`.
 * **Current behavior:** `Makefile.dc` **automatically installs** after a successful build to:
+  * `KOS/addons/include/$(KOS_ARCH)/SDL` (headers)
+  * `KOS/addons/lib/$(KOS_ARCH)` (library)
 
-  * `KOS/addons/include/dreamcast/SDL` (headers)
-  * `KOS/addons/library/dreamcast` (library)
-* **Future (when integrated via kos-ports):** installation paths and steps will be handled by **kos-ports**; consult kos-ports documentation when that transition happens.
+* `make -f Makefile.dc uninstall` removes the installed headers/lib from `KOS/addons`.
+* `make -f Makefile.dc distclean` does both: `clean` + `uninstall`.
 
 ## Video backends (Dreamcast)
 
@@ -51,7 +61,7 @@ Select a backend via `Makefile.dc` or by API before `SDL_SetVideoMode`.
 * **Button→key mapping** — map controller buttons to `SDLKey`.
 * **Texture formats** — supports 16-bit formats commonly used on Dreamcast (e.g., **RGB5551**, **RGB4444**).
 
-## Dreamcast-specific API (`include/SDL/SDL_dreamcast.h`)
+## Dreamcast-specific API (`SDL_dreamcast.h`)
 
 **Video & display**
 
